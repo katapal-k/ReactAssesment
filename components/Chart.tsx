@@ -13,7 +13,10 @@ export default (props: { data: Plotly.Data[] }) => {
   const classes = useStyles();
   const { data } = props;
 
-  const tempPresent = data.filter(node => node.yaxis === 'y').length;
+  //workaround for limitation with Plotly - it was unable to display pressure and injValveOpen
+  //together without having temperature present.  This checks for if the user has passed actual temperature data to the
+  //chart, rather than just the dummy object.
+  const tempPresent = data.filter(node => node.yaxis === 'y').length > 1;
 
   if (data.length > 1) {
     return (
@@ -27,7 +30,9 @@ export default (props: { data: Plotly.Data[] }) => {
           xaxis: { domain: [0.1, 1], fixedrange: true },
           yaxis: {
             title: 'temperature (F)',
-
+            showline: true,
+            zeroline: false,
+            ticks: 'outside',
             visible: tempPresent,
             fixedrange: true,
           },
@@ -37,7 +42,11 @@ export default (props: { data: Plotly.Data[] }) => {
             anchor: 'free',
             position: -0.1,
             side: 'left',
-
+            showline: true,
+            zeroline: false,
+            tickmode: 'auto',
+            ticks: 'inside',
+            ticklen: 20,
             tickcolor: '#b8b8b8',
             fixedrange: true,
           },
@@ -45,7 +54,9 @@ export default (props: { data: Plotly.Data[] }) => {
             title: 'injection valve opening (%)',
             overlaying: 'y',
             side: 'right',
-
+            showline: true,
+            zeroline: false,
+            ticks: 'outside',
             fixedrange: true,
           },
           legend: { orientation: 'h', y: 1.2 },

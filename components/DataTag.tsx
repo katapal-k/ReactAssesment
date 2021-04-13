@@ -6,7 +6,8 @@ import { Measurement } from './Dashboard';
 const useStyles = makeStyles({
   chip: {
     minWidth: 250,
-
+    margin: 3,
+    fontSize: 15,
   },
 });
 

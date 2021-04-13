@@ -16,8 +16,10 @@ const useStyles = makeStyles({
   },
 });
 
+//grab date object for thirty minutes prior to be passed into query
 const thirtyMinutesAgo = new Date(Date.now() - 30 * 60000).getTime();
 
+//metric names are fetched from the API and passed to getInputQuery to avoid hardcoding the query
 const getMetricsQuery = `
   query{
     getMetrics
@@ -37,7 +39,8 @@ const getDataQuery = (inputQuery: string[]) => {
    getMultipleMeasurements(input: [${inputQuery}]){
      metric,
      measurements {
-       
+       metric,
+       at,
        value,
        unit
      }
@@ -156,7 +159,7 @@ export default () => {
   const [initialData, setInitialData] = React.useState<Plotly.Data[]>([]);
   const [filteredData, setFilteredData] = React.useState<Plotly.Data[]>([]);
   const { loading, data } = useSubscription<MeasurementSub>(newMeasurementsSub);
-  const [prevSubData, setPrevSubData] = React.useState<Measurement>({ metric: "", at: 0, value: 0, unit: "" });
+  const [prevSubData, setPrevSubData] = React.useState<Measurement>({metric: "", at: 0, value: 0, unit: ""});
   const [latestData, setLatestData] = React.useState<Measurement[]>([])
 
   //initial "run" logic
@@ -176,9 +179,9 @@ export default () => {
 
       //dynamically create a template based on metrics in API for subscription data to be pushed into 
       //to be displayed on taskbar
-      let initialLatestData: Measurement[] = []
-      metricsRes.forEach((metric: string) => {
-        initialLatestData.push({ metric: metric, at: 0, value: 0, unit: "" })
+      let initialLatestData: Measurement[] = [] 
+      metricsRes.forEach((metric: string)=>{
+        initialLatestData.push({metric: metric, at: 0, value: 0, unit: ""})
       })
       setLatestData(initialLatestData);
 
@@ -194,41 +197,41 @@ export default () => {
     setFilteredData(filteredDataValue);
   }, [initialData, selection]);
 
-  React.useEffect(() => {
+  React.useEffect(()=>{
     //check the latest emission from the subscription and evaluate if the data within is updated
     if (!loading && (data?.newMeasurement.at !== prevSubData.at || data.newMeasurement.value !== prevSubData.value || data.newMeasurement.metric !== prevSubData.metric)) {
-      let measurementNode = data?.newMeasurement
-      let matchingSet = initialData.find((metricNode) => metricNode.name === measurementNode?.metric);
-      if (matchingSet && measurementNode) {
-        //push the new data into the corresponding metric's data array
-        (matchingSet.x as Plotly.Datum[]).push(new Date(measurementNode.at));
-        (matchingSet.y as Plotly.Datum[]).push(measurementNode.value);
-        const updatedData = initialData.map((metricNode) => {
-          if (metricNode.name === measurementNode?.metric) {
-            return matchingSet
-          } else {
-            return metricNode
-          }
-        });
-        //refresh the data in state
-        setInitialData(updatedData as Plotly.Data[]);
-        if (data) {
-          //replace the corresponding measurement within the latestData state object
-          let latestDataTemplate = latestData.map((measurement) => {
-            return measurement.metric === data.newMeasurement.metric ? data.newMeasurement : measurement
-          })
-          setLatestData(latestDataTemplate)
+        let measurementNode = data?.newMeasurement
+        let matchingSet = initialData.find((metricNode)=>metricNode.name === measurementNode?.metric);
+        if (matchingSet && measurementNode){
+          //push the new data into the corresponding metric's data array
+          (matchingSet.x as Plotly.Datum[]).push(new Date(measurementNode.at));
+          (matchingSet.y as Plotly.Datum[]).push(measurementNode.value);
+          const updatedData = initialData.map((metricNode)=>{
+            if(metricNode.name === measurementNode?.metric){
+              return matchingSet
+            } else {
+              return metricNode
+            }
+          });
+          //refresh the data in state
+          setInitialData(updatedData as Plotly.Data[]);
+          if (data) {
+            //replace the corresponding measurement within the latestData state object
+            let latestDataTemplate = latestData.map((measurement)=>{
+              return measurement.metric === data.newMeasurement.metric ? data.newMeasurement : measurement
+            })
+            setLatestData(latestDataTemplate)
 
-          //save this measurement to check against new subscription emissions
-          setPrevSubData(data.newMeasurement)
+            //save this measurement to check against new subscription emissions
+            setPrevSubData(data.newMeasurement)
+          }
         }
       }
-    }
-  }, [initialData, loading, data, prevSubData, latestData])
+  },[initialData, loading, data, prevSubData, latestData])
 
   return (
     <Card className={classes.card}>
-      <DashHeader metrics={metricStrings} selection={selection} setSelection={setSelection} latestData={latestData} />
+      <DashHeader metrics={metricStrings} selection={selection} setSelection={setSelection} latestData={latestData}/>
       <CardContent style={{ padding: 0 }}>
         <Chart data={filteredData} />
       </CardContent>
