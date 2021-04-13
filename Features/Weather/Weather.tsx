@@ -25,7 +25,8 @@ const getWeather = (state: IState) => {
   const { temperatureinFahrenheit, description, locationName } = state.weather;
   return {
     temperatureinFahrenheit,
-
+    description,
+    locationName,
   };
 };
 
@@ -47,7 +48,12 @@ const Weather = () => {
   const dispatch = useDispatch();
   const { temperatureinFahrenheit, description, locationName } = useSelector(getWeather);
 
-
+  const [result] = useQuery({
+    query,
+    variables: {
+      latLong,
+    },
+  });
   const { fetching, data, error } = result;
   useEffect(() => {
     if (error) {
